@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User{
+  id String @id @default(uuid())
+  email String @unique
+  password String
+  isVerified Boolean @default(true)
+  hashedToken String?
+  verifiedTokenExpiry DateTime? 
+  role Role @default(user)
+  submission Submission[]
+  leaderboard Leaderboard[]
+}
+enum Role{
+  admin
+  user
+}
+model Contest{
+  id String @id @default(uuid())
+  title String
+  startTime DateTime 
+  endTime DateTime
+  contestToChallengeMapping ContestToChallengeMapping[]
+  leaderboard Leaderboard[]
+}
+model Challenge{
+  id String @id @default(uuid())
+  title String
+  notionDocId String
+  body String
+  examples String
+  maxPoints Int 
+  contestToChallengeMapping ContestToChallengeMapping[]
+}
+model ContestToChallengeMapping{
+  id String @id @default(uuid())
+  contestId String
+  challengeId String
+  index Int 
+  contest Contest @relation(fields: [contestId],references: [id])
+  submission Submission[]
+  challenge Challenge @relation(fields: [challengeId],references: [id])
+  @@unique([contestId,challengeId])
+}
+model Submission{
+  id String @id @default(uuid())
+  submission String
+  contestToChallengeMappingId String
+  userId String
+  user User @relation(fields: [userId],references: [id])
+  points Int @default(0)
+  feedback String?
+  contestToChallengeMapping ContestToChallengeMapping @relation(fields: [contestToChallengeMappingId],references: [id])
+  createdAt DateTime @default(now())
+}
+model Leaderboard{
+  id String @id @default(uuid())
+  contestId String
+  userId String
+  score Int
+  contest Contest @relation(fields: [contestId],references: [id])
+  user User @relation(fields: [userId],references: [id])
+  @@unique([contestId,userId])
+}
