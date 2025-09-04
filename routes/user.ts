@@ -110,6 +110,7 @@ router.post("/verify", async (req, res) => {
         hashedToken: hashedToken as string,
       },
     });
+    
     if (!unverifiedUser) {
       return res.status(404).json({
         message: "Unverified user is not found",

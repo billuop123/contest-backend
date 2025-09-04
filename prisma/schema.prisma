@@ -17,7 +17,7 @@ model User{
   id String @id @default(uuid())
   email String @unique
   password String
-  isVerified Boolean @default(true)
+  isVerified Boolean @default(false)
   hashedToken String?
   verifiedTokenExpiry DateTime? 
   role Role @default(user)
@@ -53,7 +53,7 @@ model ContestToChallengeMapping{
   contest Contest @relation(fields: [contestId],references: [id])
   submission Submission[]
   challenge Challenge @relation(fields: [challengeId],references: [id])
-  @@unique([contestId,challengeId])
+
 }
 model Submission{
   id String @id @default(uuid())

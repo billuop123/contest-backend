@@ -86,7 +86,8 @@ router.post("/createchallenge", async (req, res) => {
       contestId,
       challengeId: challenge.id,
     });
-  } catch (e) {
+  } catch (e:any) {
+    console.log(e.message)
     return res.status(500).json({
       message: "Internal Server Error",
     });
