@@ -15,6 +15,7 @@ datasource db {
 }
 model User{
   id String @id @default(uuid())
+  username String @unique
   email String @unique
   password String
   isVerified Boolean @default(false)
@@ -41,7 +42,7 @@ model Challenge{
   title String
   notionDocId String
   body String
-  examples String
+  examples String?
   maxPoints Int 
   contestToChallengeMapping ContestToChallengeMapping[]
 }

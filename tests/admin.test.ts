@@ -6,6 +6,46 @@ import { prisma } from '../utils/prismaClient'
 describe('Admin Routes', () => {
   let testContestId: string
   let testChallengeId: string
+  let adminToken: string
+  let adminEmail: string
+
+  beforeEach(async () => {
+    // Create admin user
+    adminEmail = `admintest${Math.floor(Math.random() * 10000)}@gmail.com`
+    const adminUsername = `admintest${Math.floor(Math.random() * 10000)}`
+
+    // Clean up any existing user with this email
+    await prisma.user.deleteMany({ where: { email: adminEmail } })
+
+    await request(app)
+      .post('/users/signup')
+      .send({
+        username: adminUsername,
+        email: adminEmail,
+        password: 'adminpassword',
+        confirmPassword: 'adminpassword'
+      })
+
+    // Make user admin in database
+    // Wait a bit for user creation to complete
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } })
+    if (adminUser) {
+      await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { role: 'admin' }
+      })
+    }
+
+    const signinRes = await request(app)
+      .post('/users/signin')
+      .send({
+        email: adminEmail,
+        password: 'adminpassword'
+      })
+
+    adminToken = signinRes.body.token
+  })
 
   afterEach(async () => {
     // Clean up test data
@@ -24,6 +64,12 @@ describe('Admin Routes', () => {
       })
       testContestId = ''
     }
+    if (adminEmail) {
+      await prisma.user.deleteMany({
+        where: { email: adminEmail }
+      })
+      adminEmail = ''
+    }
   })
 
   describe('POST /admin/createcontest', () => {
@@ -33,6 +79,7 @@ describe('Admin Routes', () => {
 
       const res = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: 'Test Contest',
           startTime,
@@ -50,6 +97,7 @@ describe('Admin Routes', () => {
     it('should fail with invalid inputs', async () => {
       const res = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: '',
           startTime: 'invalid',
@@ -63,6 +111,7 @@ describe('Admin Routes', () => {
     it('should fail with missing fields', async () => {
       const res = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: 'Test Contest'
           // missing startTime and endTime
@@ -81,6 +130,7 @@ describe('Admin Routes', () => {
 
       const res = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: 'Test Contest for Challenge',
           startTime,
@@ -93,6 +143,7 @@ describe('Admin Routes', () => {
     it('should create a challenge successfully', async () => {
       const res = await request(app)
         .post('/admin/createchallenge')
+        .set('Authorization', adminToken)
         .send({
           notionDocId: 'test-doc-id',
           title: 'Test Challenge',
@@ -114,6 +165,7 @@ describe('Admin Routes', () => {
     it('should fail with missing required fields', async () => {
       const res = await request(app)
         .post('/admin/createchallenge')
+        .set('Authorization', adminToken)
         .send({
           title: 'Test Challenge',
           maxPoints: 100,
@@ -130,6 +182,7 @@ describe('Admin Routes', () => {
       const pastEndTime = new Date(Date.now() - 1000 * 60 * 60) // 1 hour ago
       const contestRes = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: 'Past Contest',
           startTime: new Date(Date.now() - 1000 * 60 * 60 * 24),
@@ -140,6 +193,7 @@ describe('Admin Routes', () => {
 
       const res = await request(app)
         .post('/admin/createchallenge')
+        .set('Authorization', adminToken)
         .send({
           notionDocId: 'test-doc-id',
           title: 'Test Challenge',

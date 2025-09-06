@@ -8,13 +8,58 @@ describe('Contest Routes', () => {
   let testUserEmail: string
   let activeContestId: string
   let inactiveContestId: string
+  let adminToken: string
+  let adminEmail: string
 
   beforeEach(async () => {
+    // Create admin user
+    adminEmail = `admintest${Math.floor(Math.random() * 10000)}@gmail.com`
+    const adminUsername = `admintest${Math.floor(Math.random() * 10000)}`
+
+    // Clean up any existing user with this email
+    await prisma.user.deleteMany({ where: { email: adminEmail } })
+
+    const signupRes = await request(app)
+      .post('/users/signup')
+      .send({
+        username: adminUsername,
+        email: adminEmail,
+        password: 'adminpassword',
+        confirmPassword: 'adminpassword'
+      })
+
+    if (signupRes.status !== 200) {
+      console.log('Signup failed:', signupRes.status, signupRes.body)
+    }
+
+    // Wait a bit for user creation to complete
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } })
+    if (adminUser) {
+      await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { role: 'admin' }
+      })
+    } else {
+      console.log('Admin user not found after signup')
+    }
+
+    const adminSigninRes = await request(app)
+      .post('/users/signin')
+      .send({
+        email: adminEmail,
+        password: 'adminpassword'
+      })
+
+    adminToken = adminSigninRes.body.token
+
     // Create test user
     testUserEmail = `testuser${Math.floor(Math.random() * 10000)}@gmail.com`
+    const testUsername = `testuser${Math.floor(Math.random() * 10000)}`
     await request(app)
       .post('/users/signup')
       .send({
+        username: testUsername,
         email: testUserEmail,
         password: 'testpassword',
         confirmPassword: 'testpassword'
@@ -34,6 +79,7 @@ describe('Contest Routes', () => {
     const activeEnd = new Date(Date.now() + 1000 * 60 * 60 * 2) // 2 hours from now
     const activeRes = await request(app)
       .post('/admin/createcontest')
+      .set('Authorization', adminToken)
       .send({
         title: 'Active Test Contest',
         startTime: activeStart,
@@ -46,6 +92,7 @@ describe('Contest Routes', () => {
     const inactiveEnd = new Date(Date.now() - 1000 * 60 * 60) // 1 hour ago
     const inactiveRes = await request(app)
       .post('/admin/createcontest')
+      .set('Authorization', adminToken)
       .send({
         title: 'Inactive Test Contest',
         startTime: inactiveStart,
@@ -62,6 +109,11 @@ describe('Contest Routes', () => {
     await prisma.user.deleteMany({
       where: { email: testUserEmail }
     })
+    if (adminEmail) {
+      await prisma.user.deleteMany({
+        where: { email: adminEmail }
+      })
+    }
   })
 
   describe('GET /contest/active', () => {
@@ -91,6 +143,7 @@ describe('Contest Routes', () => {
     it('should return inactive contests', async () => {
       const res = await request(app)
         .get('/contest/inactive')
+        .set('Authorization', userToken)
 
       expect(res.statusCode).toBe(200)
       expect(res.body.contests).toBeDefined()
@@ -101,10 +154,11 @@ describe('Contest Routes', () => {
     })
   })
 
-  describe('GET /contest/:contestId', () => {
+  describe('GET /contest/getcontests/:contestId', () => {
     it('should return contest details', async () => {
       const res = await request(app)
-        .get(`/contest/${activeContestId}`)
+        .get(`/contest/getcontests/${activeContestId}`)
+        .set('Authorization', userToken)
 
       expect(res.statusCode).toBe(200)
       expect(res.body.contest).toBeDefined()
@@ -114,7 +168,8 @@ describe('Contest Routes', () => {
 
     it('should fail with invalid contestId', async () => {
       const res = await request(app)
-        .get('/contest/invalid-id')
+        .get('/contest/getcontests/invalid-id')
+        .set('Authorization', userToken)
 
       expect(res.statusCode).toBe(404)
       expect(res.body.message).toBe('there is no record of specific input')

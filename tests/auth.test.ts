@@ -23,6 +23,7 @@ describe('Auth Routes', () => {
       const res = await request(app)
         .post('/users/signup')
         .send({
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'testpassword'
@@ -39,6 +40,7 @@ describe('Auth Routes', () => {
       const res = await request(app)
         .post('/users/signup')
         .send({
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'differentpassword'
@@ -52,7 +54,8 @@ describe('Auth Routes', () => {
       const res = await request(app)
         .post('/users/signup')
         .send({
-          email: 'invalidemail',
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
+          email: 'notanemail',
           password: 'testpassword',
           confirmPassword: 'testpassword'
         })
@@ -62,9 +65,11 @@ describe('Auth Routes', () => {
     })
 
     it('should fail if user already exists', async () => {
+      const username = `testuser${Math.floor(Math.random() * 10000)}`
       await request(app)
         .post('/users/signup')
         .send({
+          username,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'testpassword'
@@ -73,6 +78,7 @@ describe('Auth Routes', () => {
       const res = await request(app)
         .post('/users/signup')
         .send({
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'testpassword'
@@ -89,6 +95,7 @@ describe('Auth Routes', () => {
       await request(app)
         .post('/users/signup')
         .send({
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'testpassword'
@@ -151,6 +158,7 @@ describe('Auth Routes', () => {
       await request(app)
         .post('/users/signup')
         .send({
+          username: `testuser${Math.floor(Math.random() * 10000)}`,
           email: testUserEmail,
           password: 'testpassword',
           confirmPassword: 'testpassword'

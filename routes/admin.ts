@@ -1,6 +1,8 @@
 import express from "express";
 import z from "zod";
 import { prisma } from "../utils/prismaClient";
+import { adminMiddleware } from "../middlewares/adminMiddleware";
+import { verificationMiddlware } from "../middlewares/verificationMiddleware";
 const contestInput = z.object({
   title: z.string(),
   startTime: z.coerce.date(),
@@ -8,7 +10,7 @@ const contestInput = z.object({
 });
 export const router = express.Router();
 
-router.post("/createcontest", async (req, res) => {
+router.post("/createcontest", adminMiddleware,verificationMiddlware,async (req, res) => {
   try {
     const parsedBody = contestInput.safeParse(req.body);
     if (!parsedBody.success) {
@@ -23,10 +25,6 @@ router.post("/createcontest", async (req, res) => {
         startTime,
         endTime,
       },
-      select: {
-        title: true,
-        id: true,
-      },
     });
     res.status(200).json({
       message: "Contest successfully created",
@@ -39,7 +37,7 @@ router.post("/createcontest", async (req, res) => {
   }
 });
 
-router.post("/createchallenge", async (req, res) => {
+router.post("/createchallenge", adminMiddleware,verificationMiddlware,async (req, res) => {
   try {
     const { notionDocId, title, maxPoints, index, contestId, body, examples } =
       req.body;
@@ -48,8 +46,7 @@ router.post("/createchallenge", async (req, res) => {
       !title ||
       !maxPoints ||
       !contestId ||
-      !body ||
-      !examples
+      !body 
     ) {
       return res.status(404).json({
         message: "The required input fields are missing",
@@ -69,7 +66,7 @@ router.post("/createchallenge", async (req, res) => {
       data: {
         title,
         notionDocId,
-        maxPoints,
+        maxPoints:Number(maxPoints),
         body,
         examples,
       },
@@ -85,6 +82,7 @@ router.post("/createchallenge", async (req, res) => {
       message: "The challange is successfully created",
       contestId,
       challengeId: challenge.id,
+      challenge
     });
   } catch (e:any) {
     console.log(e.message)

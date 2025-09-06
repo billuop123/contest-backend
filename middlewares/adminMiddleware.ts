@@ -6,10 +6,11 @@ declare module "express-serve-static-core" {
     isAdmin?: boolean;
   }
 }
+declare global{
 interface JwtPayload {
   userId: string;
   admin: boolean;
-}
+}}
 export function adminMiddleware(
   req: Request,
   res: Response,

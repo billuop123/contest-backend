@@ -10,13 +10,51 @@ describe('User Routes', () => {
   let contestId: string
   let challengeId: string
   let mappingId: string
+  let adminToken: string
+  let adminEmail: string
 
   beforeEach(async () => {
+    // Create admin user for setup
+    adminEmail = `admintest${Math.floor(Math.random() * 10000)}@gmail.com`
+    const adminUsername = `admintest${Math.floor(Math.random() * 10000)}`
 
-    testUserEmail = `testuser${Math.floor(Math.random() * 10000)}@gmail.com`
+    // Clean up any existing user with this email
+    await prisma.user.deleteMany({ where: { email: adminEmail } })
+
     await request(app)
       .post('/users/signup')
       .send({
+        username: adminUsername,
+        email: adminEmail,
+        password: 'adminpassword',
+        confirmPassword: 'adminpassword'
+      })
+
+    // Wait a bit for user creation to complete
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } })
+    if (adminUser) {
+      await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { role: 'admin' }
+      })
+    }
+
+    const adminSigninRes = await request(app)
+      .post('/users/signin')
+      .send({
+        email: adminEmail,
+        password: 'adminpassword'
+      })
+
+    adminToken = adminSigninRes.body.token
+
+    testUserEmail = `testuser${Math.floor(Math.random() * 10000)}@gmail.com`
+    const testUsername = `testuser${Math.floor(Math.random() * 10000)}`
+    await request(app)
+      .post('/users/signup')
+      .send({
+        username: testUsername,
         email: testUserEmail,
         password: 'testpassword',
         confirmPassword: 'testpassword'
@@ -35,10 +73,11 @@ describe('User Routes', () => {
     testUserId = user?.id || ''
 
 
-    const startTime = new Date(Date.now() - 1000 * 60 * 30) 
-    const endTime = new Date(Date.now() + 1000 * 60 * 60 * 2) 
+    const startTime = new Date(Date.now() - 1000 * 60 * 30)
+    const endTime = new Date(Date.now() + 1000 * 60 * 60 * 2)
     const contestRes = await request(app)
       .post('/admin/createcontest')
+      .set('Authorization', adminToken)
       .send({
         title: 'Test Contest for Submissions',
         startTime,
@@ -49,6 +88,7 @@ describe('User Routes', () => {
 
     const challengeRes = await request(app)
       .post('/admin/createchallenge')
+      .set('Authorization', adminToken)
       .send({
         notionDocId: 'test-doc-id',
         title: 'Test Challenge',
@@ -87,6 +127,11 @@ describe('User Routes', () => {
     await prisma.user.deleteMany({
       where: { email: testUserEmail }
     })
+    if (adminEmail) {
+      await prisma.user.deleteMany({
+        where: { email: adminEmail }
+      })
+    }
   })
 
   describe('POST /users/submissions', () => {
@@ -136,6 +181,7 @@ describe('User Routes', () => {
       const activeEnd = new Date(Date.now() + 1000 * 60 * 60 * 2) // 2 hours from now
       const contestRes = await request(app)
         .post('/admin/createcontest')
+        .set('Authorization', adminToken)
         .send({
           title: 'Deadline Test Contest',
           startTime: activeStart,
@@ -147,6 +193,7 @@ describe('User Routes', () => {
       // Create challenge for active contest
       const challengeRes = await request(app)
         .post('/admin/createchallenge')
+        .set('Authorization', adminToken)
         .send({
           notionDocId: 'test-doc-id',
           title: 'Deadline Test Challenge',
@@ -180,7 +227,7 @@ describe('User Routes', () => {
         })
 
       expect(res.statusCode).toBe(403)
-      expect(res.body.message).toBe('The deadline for the following contest is already over')
+      expect(res.body.message).toBe('The contest deadline is over')
 
       // Clean up
       await prisma.contestToChallengeMapping.deleteMany({

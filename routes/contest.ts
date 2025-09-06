@@ -4,7 +4,8 @@ import { prisma } from "../utils/prismaClient";
 export const router = express.Router();
 import { createClient } from "redis";
 import { getLeaderboard } from "../utils/helperFunctions";
-const redisClient = await createClient()
+import { verificationMiddlware } from "../middlewares/verificationMiddleware";
+const redisClient = await createClient({url:process.env.REDIS_URL})
   .on("error", (err) => console.log("Redis Client Error", err))
   .connect();
 router.get("/active", userMiddleware, async (req: Request, res: Response) => {
@@ -46,7 +47,7 @@ router.get("/active", userMiddleware, async (req: Request, res: Response) => {
     })
   }
 });
-router.get("/inactive", async (req, res) => {
+router.get("/inactive", userMiddleware,async (req, res) => {
   try{
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -76,8 +77,41 @@ router.get("/inactive", async (req, res) => {
     })
   }
 });
-router.get("/:contestId", async (req, res) => {
+router.get('/challenges',userMiddleware,async(req,res)=>{
+  try{
+    const {contestId}=req.query
+    if(!contestId){
+      return res.status(404).json({
+        message:"The contest id is not found"
+      })
+    }
+    const challenges = await prisma.contestToChallengeMapping.findMany({
+      where: { contestId: contestId as string },
+      include: {
+        
+        challenge: true, 
+        
+      },
+      orderBy: {
+        index: 'asc', 
+      },
+    });
+    
+    return res.status(200).json({
+      challenges: challenges.map(c => c.challenge),
+    });
+    
+  }catch(e){
+    return res.status(500).json(
+      {
+        message:'Internal Server Error'
+      }
+    )
+  }
+})
+router.get("/getcontests/:contestId", userMiddleware,async (req, res) => {
   try {
+    console.log()
     const { contestId } = req.params;
     if (!contestId) {
       return res.status(404).json({
@@ -104,7 +138,7 @@ router.get("/:contestId", async (req, res) => {
   }
 });
 
-router.get("/leaderboard/:contestId", userMiddleware, async (req, res) => {
+router.get("/leaderboard/:contestId", userMiddleware,async (req, res) => {
   try {
     const { contestId } = req.params;
     if (!contestId) {
@@ -145,4 +179,49 @@ router.get("/leaderboard/:contestId", userMiddleware, async (req, res) => {
     });
   }
 });
-
+router.get('/mappingid',userMiddleware,async (req,res)=>{
+  try{
+    const {challengeId}=req.query
+    if(!challengeId){
+      return res.status(404).json({
+        message:"Challenge Id not found"
+      })
+    }
+    const mappingId=await prisma.contestToChallengeMapping.findFirst({
+      where:{
+        challengeId:challengeId as string
+      },select:{
+        id:true
+      }
+    })
+    return res.status(200).json({
+      mappingId
+    })
+  }catch{
+    return res.status(500).json({
+      message:"Internal Server Error"
+    })
+  }
+})
+router.get('/challenges/:challengeId',userMiddleware,async(req,res)=>{
+  try{
+  const {challengeId}=req.params
+  if(!challengeId){
+    return res.status(404).json({
+      message:"challenge Id not found"
+    })
+  }
+  const challenge=await prisma.challenge.findUnique({
+    where:{
+      id:challengeId as string
+    }
+  })
+  return res.status(200).json({
+    challenge
+  })
+  }catch(e){
+    return res.status(404).json({
+      message:"Internal server error"
+    })
+  }
+})

@@ -27,11 +27,13 @@ export const sendEmail = async ({ email, emailType, userId }: EmailOptions) => {
         verifiedTokenExpiry: new Date(Date.now() + 3600000000),
       },
     });
+    const verifyUrl=`${process.env.FRONTEND_URL}/verifyemail?token=${hashedToken}&userId=${userId}`
+    console.log(process.env.FRONTEND_URL)
     const mailResponse = await transporter.sendMail({
-        from:process.env.SMTP_USER,
+        from:"Devforces",
         to:email,
         subject:emailType=="VERIFY"?"verify your email":"",
-        html:`<p>Click here to verify your email <a href="${process.env.DOMAIN}/verifyemail?token=${hashedToken}">here</a>
+        html:`<p>Click here to verify your email <a href="${verifyUrl}">here</a>
         </p>`
     });
     return mailResponse
