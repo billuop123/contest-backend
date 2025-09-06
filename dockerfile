@@ -1,5 +1,7 @@
 
-FROM oven/bun:latest
+FROM oven/bun:alpine
+
+
 
 WORKDIR /app
 
