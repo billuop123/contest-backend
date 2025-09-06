@@ -11,7 +11,7 @@ RUN bun install --legacy-peer-deps
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN bunx prisma generate
 
 EXPOSE 3000
 
