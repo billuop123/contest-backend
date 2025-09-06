@@ -19,6 +19,8 @@ const redisClient = await createClient({url:process.env.REDIS_URL})
   .on("error", (err) => console.log("Redis Client Error", err))
   .connect();
 const client = new OpenAI();
+router.get("/", (req, res) => res.send("OK"));
+
 router.post("/signup", async (req: Request, res: Response) => {
   try {
     const { username, password, confirmPassword ,email} = req.body;
