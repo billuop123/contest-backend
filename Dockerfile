@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 3000
 
 
-CMD ["bun", "bin.ts"]
+CMD ["bun", "run","bin.ts"]
