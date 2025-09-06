@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package.json bun.lockb* ./
 
-RUN bun install
+RUN bun install --legacy-peer-deps
 
 COPY . .
 
