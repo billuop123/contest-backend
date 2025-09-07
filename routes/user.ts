@@ -353,7 +353,7 @@ router.get('/logout',(req,res)=>{
   res.cookie("token", "", {
     httpOnly: true,
     secure: true,  
-    sameSite: "strict",   
+    sameSite: "none",   
     expires: new Date(0), 
     path:"/"
   })
