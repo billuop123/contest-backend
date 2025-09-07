@@ -71,7 +71,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       message: "The user is successfully signedup",
     });
   } catch (e:any) {
-    console.log(e.message)
+
     res.status(500).json({
       message: "Internal server error",
     });
@@ -123,7 +123,7 @@ router.post("/signin", async (req: Request, res: Response) => {
 });
 router.get("/verify",async (req, res) => {
   try {
-    console.log("/verify called")
+
     const { hashedToken,userId } = req.query;
     if (!hashedToken || !userId) {
       return res.status(404).json({
@@ -330,7 +330,6 @@ router.get("/isloggedin",async (req:Request,res:Response)=>{
     })
   }
     catch(e:any){
-        console.log(e.message)
       return res.status(500).json({
         message:"Internal server error"
       })
@@ -356,6 +355,7 @@ router.get('/logout',(req,res)=>{
     secure: true,  
     sameSite: "strict",   
     expires: new Date(0), 
+    path:"/"
   })
   return res.status(200).json({
     message:"Logged out successfully"
