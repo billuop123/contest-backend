@@ -63,7 +63,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       },
     });
     try {
-      await sendEmail({ email, emailType: "VERIFY", userId: newUser.id });
+      // await sendEmail({ email, emailType: "VERIFY", userId: newUser.id });
     } catch (e) {
       // Ignore email errors for now
     }

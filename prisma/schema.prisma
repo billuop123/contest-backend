@@ -18,7 +18,7 @@ model User{
   username String @unique
   email String @unique
   password String
-  isVerified Boolean @default(false)
+  isVerified Boolean @default(true)
   hashedToken String?
   verifiedTokenExpiry DateTime? 
   role Role @default(user)
