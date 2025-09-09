@@ -79,17 +79,18 @@ const signinInputs = z.object({
 });
 export const signin= async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
     const parsedBody = signinInputs.safeParse(req.body);
     if (!parsedBody.success) {
       return res.status(403).json({
         message: "The input fields are not valid",
       });
     }
+    const { email, password } = parsedBody.data;
+
     const user = await prisma.user.findUnique({
       where: {
         email,
-      
+
       },
     });
 
@@ -104,16 +105,21 @@ export const signin= async (req: Request, res: Response) => {
       process.env.JWT_SECRET!
     );
     res.cookie("token", token, {
-      httpOnly: true,  
-      secure: false,    
-      sameSite: "strict", 
-      maxAge: 24 * 60 * 60 * 1000 
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000
     });
     return res.status(200).json({
       message: "User successfully signed in",
       token,
     });
-  }} catch (e) {
+    } else {
+      return res.status(401).json({
+        message: "Invalid password",
+      });
+    }
+  } catch (e) {
     res.status(500).json({
       message: "Internal server error",
     });
