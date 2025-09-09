@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 import { prisma } from "./prismaClient";
-const redisClient = await createClient()
+export const redisClient = await createClient()
   .on("error", (err) => console.log("Redis Client Error", err))
   .connect();
 export async function  getLeaderboard(contestId:string){

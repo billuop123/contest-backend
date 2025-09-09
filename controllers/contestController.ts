@@ -1,10 +1,7 @@
 import type { Request, Response } from "express";
+import { getLeaderboard, redisClient } from "../utils/helperFunctions";
 import { prisma } from "../utils/prismaClient";
-import { createClient } from "redis";
-import { getLeaderboard } from "../utils/helperFunctions";
-const redisClient = await createClient()
-  .on("error", (err) => console.log("Redis Client Error", err))
-  .connect();
+
 export const activeContests=async (req: Request, res: Response) => {
   try{
   const page = parseInt(req.query.page as string) || 1;
@@ -108,7 +105,6 @@ export const challenges=async(req:Request,res:Response)=>{
 }
 export const getContestsbyId=async (req:Request, res:Response) => {
   try {
-    console.log()
     const { contestId } = req.params;
     if (!contestId) {
       return res.status(404).json({
