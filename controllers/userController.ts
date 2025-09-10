@@ -116,7 +116,7 @@ export const signin= async (req: Request, res: Response) => {
     });
     } else {
       return res.status(401).json({
-        message: "Invalid password",
+        message: "Password doesnot match",
       });
     }
   } catch (e) {
@@ -359,9 +359,9 @@ export const logout=(req:Request,res:Response)=>{
     try{
     res.cookie("token", "", {
       httpOnly: true,
-      secure: false,  
-      sameSite: "none",   
-      expires: new Date(0), 
+      secure: false,
+      sameSite: "strict",
+      expires: new Date(0),
       path:"/"
     })
     return res.status(200).json({

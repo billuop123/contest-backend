@@ -71,6 +71,37 @@ export const inactiveContest=async (req:Request, res:Response) => {
     })
   }
 }
+export const futureContests=async (req:Request, res:Response) => {
+  try{
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const now=new Date()
+    const [contests,total]=await  Promise.all([
+      prisma.contest.findMany({
+        where:{endTime:{lte:now}},
+        take:limit,
+        skip,
+        orderBy:{startTime:'asc'}
+      }),prisma.contest.count({
+        where:{
+          startTime:{gte:now}
+        }
+      })
+    ])
+    res.status(200).json({
+      page,
+      limit,
+      total,
+      contests
+    })
+  }catch(e){
+    res.status(500).json({
+      message:"Internal Server Error"
+    })
+  }
+}
+
 export const challenges=async(req:Request,res:Response)=>{
   try{
     const {contestId}=req.query
