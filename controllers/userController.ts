@@ -1,4 +1,3 @@
-import { createClient } from "redis";
 import z from "zod";
 import { sendEmail } from "../utils/email";
 import type { Request, Response } from "express";
@@ -6,9 +5,7 @@ import { prisma } from "../utils/prismaClient";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import OpenAI from "openai";
-const redisClient = await createClient()
-  .on("error", (err) => console.log("Redis Client Error", err))
-  .connect();
+import { redisClient } from "../utils/helperFunctions";
 const signupInput = z.object({
   username: z.string(),
   password: z.string(),

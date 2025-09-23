@@ -1,7 +1,17 @@
 import { createClient } from "redis";
 import { prisma } from "./prismaClient";
-export const redisClient = await createClient()
+const redisHost = process.env.REDIS_HOST || "localhost";
+const redisPort = parseInt(process.env.REDIS_PORT || "6379");
+console.log(`Attempting to connect to Redis at ${redisHost}:${redisPort}`);
+export const redisClient = await createClient({
+  socket: {
+    host: redisHost,
+    port: redisPort,
+  },
+})
   .on("error", (err) => console.log("Redis Client Error", err))
+  .on("connect", () => console.log("Redis client connected"))
+  .on("ready", () => console.log("Redis client ready"))
   .connect();
 export async function  getLeaderboard(contestId:string){
     const leaderboard = await prisma.leaderboard.findMany({

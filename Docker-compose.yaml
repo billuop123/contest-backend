@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  backend:
+    image: billuop/contest-backend:v3
+    container_name: contest-backend
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    command: ["sh", "-c", "bunx prisma migrate deploy && bun run bin.ts"]
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+
